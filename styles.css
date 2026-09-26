@@ -55,6 +55,9 @@ html[data-theme="dark"] {
 
 * { box-sizing: border-box; }
 
+/* el atributo hidden debe ganar a cualquier display de regla (auth/app usan flex/grid) */
+[hidden] { display: none !important; }
+
 html { color-scheme: light dark; overflow-x: hidden; }
 
 body {
