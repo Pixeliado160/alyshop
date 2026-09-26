@@ -55,7 +55,7 @@ html[data-theme="dark"] {
 
 * { box-sizing: border-box; }
 
-html { color-scheme: light dark; }
+html { color-scheme: light dark; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -355,10 +355,12 @@ html[data-theme="dark"] .card-add:hover { color: #2a1418; }
 
 /* ================= LOGIN / REGISTRO ================= */
 .auth {
-  position: fixed; inset: 0; z-index: 40; display: grid;
-  grid-template-columns: 1.05fr 1fr; background: var(--bg);
+  position: fixed; inset: 0; z-index: 40; display: flex;
+  background: var(--bg); overflow: auto;
   animation: authIn .6s var(--ease) both;
 }
+.auth-aside { flex: 1 1 52%; min-width: 0; }
+.auth-panel { flex: 1 1 48%; min-width: 0; }
 .auth.leaving { animation: authOut .5s var(--ease) forwards; }
 @keyframes authIn { from { opacity: 0; } }
 @keyframes authOut { to { opacity: 0; transform: scale(.98); pointer-events: none; } }
@@ -395,8 +397,8 @@ html[data-theme="dark"] .auth-orbs span { mix-blend-mode: screen; opacity: .4; }
 .auth-word { font-family: var(--serif); font-weight: 600; font-size: 2.4rem; letter-spacing: .14em; margin: 0; color: var(--ink); }
 .auth-tag { font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 1.05rem; margin: 8px 0 0; }
 
-.auth-panel { display: grid; place-items: center; padding: 32px; overflow: auto; }
-.auth-form { width: min(360px, 100%); animation: formRise .7s var(--ease) .1s both; }
+.auth-panel { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+.auth-form { width: 100%; max-width: 360px; animation: formRise .7s var(--ease) .1s both; }
 @keyframes formRise { from { opacity: 0; transform: translateY(22px); } }
 .auth-form h1 { font-family: var(--serif); font-weight: 500; font-size: 2rem; letter-spacing: -.02em; margin: 0 0 8px; }
 .auth-sub { color: var(--ink-2); margin: 0 0 28px; line-height: 1.5; }
@@ -413,8 +415,8 @@ html[data-theme="dark"] .auth-orbs span { mix-blend-mode: screen; opacity: .4; }
 .auth-switch button:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 760px) {
-  .auth { grid-template-columns: 1fr; }
   .auth-aside { display: none; }
+  .auth-panel { flex: 1 1 100%; }
 }
 
 /* entrada de la app tras login */
