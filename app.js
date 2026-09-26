@@ -418,12 +418,22 @@
     document.querySelector(".auth-only-register").hidden = true;
   });
 
+  /* ---------- cuenta de demo (siembra automática) ---------- */
+  const DEMO = { email: "aly@alyshop.com", name: "Aly", pass: "alyshop" };
+  async function seedDemo() {
+    const users = readUsers();
+    if (users.some(u => u.email === DEMO.email)) return;
+    users.push({ email: DEMO.email, name: DEMO.name, hash: await hashPass(DEMO.pass) });
+    writeUsers(users);
+  }
+
   /* ---------- init ---------- */
   initTheme();
   load();
   render();
   refreshCart();
   setAuthMode(false);
+  seedDemo();
 
   const sess = (() => { try { return JSON.parse(localStorage.getItem(KEY_SESSION) || "null"); } catch { return null; } })();
   if (sess && sess.email) enterApp(sess, false);
