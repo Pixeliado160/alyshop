@@ -4,6 +4,8 @@
 
   const KEY_DATA = "alyshop:v1";
   const KEY_THEME = "alyshop:theme";
+  const KEY_USERS = "alyshop:users";
+  const KEY_SESSION = "alyshop:session";
   const money = (n) => "Q " + (Number(n) || 0).toFixed(2);
   const $ = (s, r = document) => r.querySelector(s);
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -75,12 +77,12 @@
       return;
     }
 
-    grid.innerHTML = list.map(p => {
+    grid.innerHTML = list.map((p, i) => {
       const out = Number(p.stock) <= 0;
       const photo = p.photo
         ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy">`
         : `<span class="noimg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1-1.6A1.5 1.5 0 0 1 9 4.7h6a1.5 1.5 0 0 1 1.3.7l1 1.6h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></span>`;
-      return `<article class="card" data-edit="${p.id}">
+      return `<article class="card" data-edit="${p.id}" style="--i:${Math.min(i, 12)}">
         <div class="card-photo">
           ${photo}
           <span class="card-stock ${out ? "out" : ""}">${out ? "Agotado" : p.stock + " en stock"}</span>
@@ -236,7 +238,12 @@
     const detailed = cartDetailed();
     const count = detailed.reduce((s, l) => s + l.qty, 0);
     $("#cart-count").textContent = count;
-    $("#cart-total").textContent = money(cartTotal());
+    const totalEl = $("#cart-total");
+    const newTotal = money(cartTotal());
+    if (totalEl.textContent !== newTotal) {
+      totalEl.textContent = newTotal;
+      totalEl.classList.remove("tick"); void totalEl.offsetWidth; totalEl.classList.add("tick");
+    }
 
     const listEl = $("#cart-list");
     const emptyC = $("#cart-empty");
@@ -328,9 +335,96 @@
   $("#btn-add-empty").addEventListener("click", () => openProduct(null));
   $("#btn-cart").addEventListener("click", () => { refreshCart(); openSheet($("#sheet-cart")); });
 
+  /* ---------- autenticación (local) ---------- */
+  const authEl = $("#auth");
+  const appEl = $("#app");
+  let isRegister = false;
+
+  // hash simple (no reversible) — suficiente para una demo local, sin texto plano
+  async function hashPass(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("aly·" + str));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  const readUsers = () => { try { return JSON.parse(localStorage.getItem(KEY_USERS) || "[]"); } catch { return []; } };
+  const writeUsers = (u) => localStorage.setItem(KEY_USERS, JSON.stringify(u));
+
+  function authError(msg) {
+    const e = $("#auth-error");
+    e.textContent = msg; e.hidden = false;
+    e.style.animation = "none"; void e.offsetWidth; e.style.animation = "";
+  }
+
+  function setAuthMode(register) {
+    isRegister = register;
+    $("#auth-error").hidden = true;
+    document.querySelector(".auth-only-register").hidden = !register;
+    $("#a-name").required = register;
+    $("#auth-title").textContent = register ? "Crea tu cuenta" : "Bienvenida de vuelta";
+    $("#auth-sub").textContent = register
+      ? "Regístrate para empezar a administrar tu inventario."
+      : "Inicia sesión para entrar a tu inventario.";
+    $("#auth-submit").textContent = register ? "Crear cuenta" : "Entrar";
+    $("#auth-switch-text").textContent = register ? "¿Ya tienes cuenta?" : "¿Primera vez?";
+    $("#auth-switch-btn").textContent = register ? "Iniciar sesión" : "Crear cuenta";
+    $("#a-pass").setAttribute("autocomplete", register ? "new-password" : "current-password");
+  }
+
+  $("#auth-switch-btn").addEventListener("click", () => setAuthMode(!isRegister));
+
+  $("#auth-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = $("#a-email").value.trim().toLowerCase();
+    const pass = $("#a-pass").value;
+    if (!email || pass.length < 4) { authError("Revisa el correo y una contraseña de 4+ caracteres."); return; }
+    const users = readUsers();
+    const hash = await hashPass(pass);
+
+    if (isRegister) {
+      const name = $("#a-name").value.trim();
+      if (!name) { authError("Escribe tu nombre."); return; }
+      if (users.some(u => u.email === email)) { authError("Ese correo ya está registrado. Inicia sesión."); return; }
+      users.push({ email, name, hash });
+      writeUsers(users);
+      startSession({ email, name });
+    } else {
+      const u = users.find(x => x.email === email);
+      if (!u || u.hash !== hash) { authError("Correo o contraseña incorrectos."); return; }
+      startSession({ email: u.email, name: u.name });
+    }
+  });
+
+  function startSession(user) {
+    localStorage.setItem(KEY_SESSION, JSON.stringify(user));
+    enterApp(user, true);
+  }
+
+  function enterApp(user, animate) {
+    $("#intro-title").textContent = firstName(user.name) ? `Hola, ${firstName(user.name)}.` : "Tu inventario, con calma.";
+    if (animate) {
+      authEl.classList.add("leaving");
+      setTimeout(() => { authEl.hidden = true; authEl.classList.remove("leaving"); appEl.hidden = false; }, 480);
+    } else {
+      authEl.hidden = true; appEl.hidden = false;
+    }
+  }
+  const firstName = (n) => (n || "").trim().split(/\s+/)[0] || "";
+
+  $("#btn-logout").addEventListener("click", () => {
+    localStorage.removeItem(KEY_SESSION);
+    appEl.hidden = true;
+    authEl.hidden = false;
+    setAuthMode(false);
+    $("#auth-form").reset();
+    document.querySelector(".auth-only-register").hidden = true;
+  });
+
   /* ---------- init ---------- */
   initTheme();
   load();
   render();
   refreshCart();
+  setAuthMode(false);
+
+  const sess = (() => { try { return JSON.parse(localStorage.getItem(KEY_SESSION) || "null"); } catch { return null; } })();
+  if (sess && sess.email) enterApp(sess, false);
 })();

@@ -353,6 +353,115 @@ html[data-theme="dark"] .card-add:hover { color: #2a1418; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+/* ================= LOGIN / REGISTRO ================= */
+.auth {
+  position: fixed; inset: 0; z-index: 40; display: grid;
+  grid-template-columns: 1.05fr 1fr; background: var(--bg);
+  animation: authIn .6s var(--ease) both;
+}
+.auth.leaving { animation: authOut .5s var(--ease) forwards; }
+@keyframes authIn { from { opacity: 0; } }
+@keyframes authOut { to { opacity: 0; transform: scale(.98); pointer-events: none; } }
+
+/* costado ilustrado con orbes en movimiento */
+.auth-aside {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 0% 0%, var(--rose-wash) 0, transparent 60%),
+    linear-gradient(155deg, var(--surface-2), var(--bg-tint));
+  display: grid; place-items: center;
+}
+.auth-orbs span {
+  position: absolute; border-radius: 50%; filter: blur(38px); opacity: .55;
+  mix-blend-mode: multiply;
+}
+html[data-theme="dark"] .auth-orbs span { mix-blend-mode: screen; opacity: .4; }
+.auth-orbs span:nth-child(1) { width: 320px; height: 320px; background: var(--rose); top: -60px; left: -40px; animation: float1 16s var(--ease) infinite; }
+.auth-orbs span:nth-child(2) { width: 260px; height: 260px; background: var(--gold); bottom: -50px; left: 30%; animation: float2 19s var(--ease) infinite; }
+.auth-orbs span:nth-child(3) { width: 220px; height: 220px; background: var(--rose-deep); top: 30%; right: -40px; animation: float3 22s var(--ease) infinite; }
+@keyframes float1 { 50% { transform: translate(60px, 80px) scale(1.15); } }
+@keyframes float2 { 50% { transform: translate(-50px, -40px) scale(1.1); } }
+@keyframes float3 { 50% { transform: translate(-40px, 50px) scale(1.2); } }
+
+.auth-quote { position: relative; text-align: center; z-index: 1; padding: 24px; }
+.auth-mark {
+  display: inline-grid; place-items: center; width: 68px; height: 68px; margin-bottom: 20px;
+  color: var(--rose); background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-radius: 20px; box-shadow: var(--shadow-1); backdrop-filter: blur(4px);
+  animation: markPop .8s var(--ease) .2s both;
+}
+.auth-mark svg { width: 34px; height: 34px; }
+@keyframes markPop { from { opacity: 0; transform: translateY(16px) rotate(-8deg); } }
+.auth-word { font-family: var(--serif); font-weight: 600; font-size: 2.4rem; letter-spacing: .14em; margin: 0; color: var(--ink); }
+.auth-tag { font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 1.05rem; margin: 8px 0 0; }
+
+.auth-panel { display: grid; place-items: center; padding: 32px; overflow: auto; }
+.auth-form { width: min(360px, 100%); animation: formRise .7s var(--ease) .1s both; }
+@keyframes formRise { from { opacity: 0; transform: translateY(22px); } }
+.auth-form h1 { font-family: var(--serif); font-weight: 500; font-size: 2rem; letter-spacing: -.02em; margin: 0 0 8px; }
+.auth-sub { color: var(--ink-2); margin: 0 0 28px; line-height: 1.5; }
+.auth-form .field input { background: var(--surface); }
+.auth-error {
+  color: var(--danger); font-size: .84rem; margin: -4px 0 14px; padding: 10px 14px;
+  background: color-mix(in srgb, var(--danger) 10%, transparent); border-radius: 10px;
+  animation: shake .4s var(--ease);
+}
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.auth-submit { width: 100%; justify-content: center; padding: 14px; font-size: 1rem; margin-top: 6px; }
+.auth-switch { text-align: center; margin: 20px 0 0; color: var(--ink-2); font-size: .9rem; }
+.auth-switch button { background: none; border: none; color: var(--rose-deep); font-weight: 600; cursor: pointer; font-size: .9rem; padding: 4px; }
+.auth-switch button:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth-aside { display: none; }
+}
+
+/* entrada de la app tras login */
+#app { animation: appReveal .6s var(--ease) both; }
+@keyframes appReveal { from { opacity: 0; transform: translateY(10px); } }
+
+/* ================= MOTION MÁS LLAMATIVO ================= */
+/* la marca del topbar respira sutil al hacer hover */
+.brand-mark { transition: transform .5s var(--ease); }
+.brand:hover .brand-mark { transform: rotate(-6deg) scale(1.08); }
+
+/* cascada al aparecer las tarjetas */
+.card { animation: cardIn .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 55ms); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(20px) scale(.97); } }
+
+/* foto de la tarjeta con zoom suave */
+.card-photo img { transition: transform .5s var(--ease); }
+.card:hover .card-photo img { transform: scale(1.06); }
+
+/* brillo que barre la tarjeta al pasar el cursor */
+.card::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--surface) 55%, transparent) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform .7s var(--ease); z-index: 3;
+}
+.card:hover::after { transform: translateX(120%); }
+
+/* el contador del carrito pulsa cuando cambia */
+.cart-count.bump { animation: pulse .5s var(--ease); }
+@keyframes pulse { 0%{transform:scale(1)} 35%{transform:scale(1.5)} 60%{transform:scale(.9)} 100%{transform:scale(1)} }
+
+/* botón agregar: el ícono gira al hover */
+.card-add svg { transition: transform .35s var(--ease); }
+.card-add:hover svg { transform: rotate(90deg); }
+
+/* recibo aparece con un sello */
+.receipt { animation: stamp .5s var(--ease) both; }
+@keyframes stamp { from { opacity: 0; transform: scale(.94) rotate(-1deg); } }
+
+/* total del carrito late al actualizarse */
+.cart-total strong.tick { animation: tick .4s var(--ease); }
+@keyframes tick { 50% { transform: scale(1.12); color: var(--rose-deep); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-orbs span, .brand-mark, .card, .card::after { animation: none !important; }
+}
+
 /* ---- print (recibo) ---- */
 @media print {
   body > *:not(#sheet-receipt) { display: none !important; }
